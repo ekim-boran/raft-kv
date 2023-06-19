@@ -19,7 +19,7 @@ export const permutations = arr => {
 
 export const equal = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 export const delay = (n) => new Promise(resolve => setTimeout(resolve, n))
-export const clear_data_dir = () => fs.readdir("data").then(files => Promise.all(files.map(file => fs.unlink(path.join("data", file)))))
+export const clear_data_dir = () => fs.readdir("data").then(files => Promise.all(files.map(file => fs.unlink(path.join("data", file))))).catch(_ => { })
 
 export async function proxy(config, req, res) {
     let { from, to, ...rest } = req.body;
