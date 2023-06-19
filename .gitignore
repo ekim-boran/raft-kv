@@ -1,0 +1,7 @@
+node_modules/
+data/*
+
+raft_test.pem
+package-lock.json
+porcupine/test.json
+porcupine/error.html
