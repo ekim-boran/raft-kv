@@ -23,11 +23,11 @@ export function cond_install_snapshot(raft, lastTerm, len, snapshot) {
         raft.snapshot = snapshot;
         save(raft)
     }
-    let oldCommitLen = raft.commitLen
+    let x = raft.appliedLen
     raft.appliedLen = Math.max(raft.appliedLen, len)
-    raft.commitLen = Math.max(oldCommitLen, len)
+    raft.commitLen = Math.max(raft.commitLen, len)
 
-    return oldCommitLen < len
+    return x < len
 }
 
 export function snapshot(raft, len, snapshot) {

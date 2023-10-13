@@ -13,8 +13,8 @@
 - Each raft/kv server works as a seperate process.
 - Raft state is stored in ./data folder.
 - Uses go porcupine library to do linearization check.
-- `node .\test\test_kv.js` to execute kv tests 
-- `node .\test\test_raft.js` to execute kv tests 
+- `node ./test/test_kv.js` to execute kv tests 
+- `node ./test/test_raft.js` to execute raft tests 
 
 #### AWS Test
 - testing code commissions ec2-instances automatically, configures the environment and run kv-server on ec2.  

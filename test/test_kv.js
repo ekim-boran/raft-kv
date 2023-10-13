@@ -44,7 +44,6 @@ async function generic_test(nservers, unreliable, nclients, nactions, nkeys, dis
     stop_test(config)
     if (code == 0) console.log("---------------Test Succeed--------------")
     else console.log("---------Test Failed---------------")
-
 }
 
 

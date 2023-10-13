@@ -96,4 +96,5 @@ export function InstallSnapshot(raft, { term, ...other }) {
     if (term > raft.term) cast_vote(raft, Roles.Follower, term, -1);
     if (term == raft.term && raft.role == Roles.Candidate) raft.role = Roles.Follower;
     raft.applier({ type: "Snapshot", ...other })
+    return installSnapshotResponse(raft.term);
 }
