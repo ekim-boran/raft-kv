@@ -27,7 +27,7 @@
  
 ### TODO: 
 - check if AWS Tests still working or not  
-- Refactor testing code. 
-- Add network partitions to induce split brain 
+- Refactor testing code. Test utilities can be simplified further.
+- Add new test cases: network partitions to induce split brain 
 
 

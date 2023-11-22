@@ -9,29 +9,6 @@ import { Client } from "../src/raft_kv/types.js"
 import { ApplyMsg } from "../src/raft/types.js"
 import { delay, equal, get_debug_port } from "../src/util.js"
 
-class Node {
-    params: string[]
-    logs: any[]
-    lastApplied: number
-
-    constructor(params: string[]) {
-        this.params = params
-        this.logs = []
-        this.lastApplied = -1
-    }
-    start() {
-
-    }
-    crash() {
-
-    }
-    restart() {
-
-    }
-}
-
-
-
 export type Config = {
     stop: boolean;
     servers: string[];
