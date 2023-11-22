@@ -1,35 +1,33 @@
 
-import { make_generic_test, create_raft, wait, one, nCommited, connect, disconnect, check_no_leader, check_one_leader, stop_test, delay, send_RPC, restart, crash } from './util.js'
+import { delay } from '../src/util.js';
+import { make_generic_test, create_raft, wait, one, nCommited, connect, disconnect, check_no_leader, check_one_leader, stop_test, send_RPC, restart, crash, Config } from './util.js'
 
 
-
-async function Test(f, n, unreliable = false, snapshot = false) {
+async function Test(f: (con: Config) => Promise<void>, n: number, unreliable = false, snapshot = false) {
     console.log("Starting Test", f.name);
     let config = await make_generic_test(create_raft, n, unreliable, snapshot);
     try {
         await f(config);
-        console.log("Completed Test", f.name);
     }
     finally {
         await stop_test(config);
     }
+    console.log("Completed Test", f.name);
 }
 
-const start = (config, leader, value) => send_RPC(config, leader, "Commit", { item: value })
+const start = (config: Config, leader: string, value: any) => send_RPC(config, leader, "Commit", { item: value })
 
-
-
-async function TestInitialElection2A(config) {
+async function TestInitialElection2A(config: Config) {
     await check_one_leader(config);
     await delay(2000);
     await check_one_leader(config);
 }
 
-function get(config, cur, i) {
+function get(config: Config, cur: string, i: number) {
     return config.servers[(config.servers.findIndex((a) => a == cur) + i) % (config.servers.length)]
 }
 
-async function TestReElection2A(config) {
+async function TestReElection2A(config: Config) {
     let leader = await check_one_leader(config);
     disconnect(config, leader);
     let leader2 = await check_one_leader(config);
@@ -42,7 +40,7 @@ async function TestReElection2A(config) {
     await check_one_leader(config);
 }
 
-async function TestManyElections2A(config) {
+async function TestManyElections2A(config: Config) {
     await check_one_leader(config);
     for (let i = 0; i < 10; i++) {
         let i1 = Math.floor(Math.random() * 7);
@@ -59,7 +57,7 @@ async function TestManyElections2A(config) {
     await check_one_leader(config);
 }
 
-async function TestBasicAgree2B(config) {
+async function TestBasicAgree2B(config: Config) {
     let n = config.servers.length;
     for (let i = 0; i < 10; i++) {
         let [nd, _] = nCommited(config, i);
@@ -69,7 +67,7 @@ async function TestBasicAgree2B(config) {
     }
 }
 
-async function TestFailAgree2B(config) {
+async function TestFailAgree2B(config: Config) {
     let n = config.servers.length;
     await one(config, 101, n, false);
     let leader = await check_one_leader(config);
@@ -80,13 +78,14 @@ async function TestFailAgree2B(config) {
     delay(1000);
     await one(config, 104, n - 1, false);
     await one(config, 105, n - 1, false);
+    console.log("here")
     connect(config, get(config, leader, 1));
     await one(config, 106, n, true);
     delay(1000);
     await one(config, 107, n, true);
 }
 
-async function TestFailNoAgree2B(config) {
+async function TestFailNoAgree2B(config: Config) {
     let n = config.servers.length;
     await one(config, 101, n, false);
     let leader = await check_one_leader(config);
@@ -110,7 +109,7 @@ async function TestFailNoAgree2B(config) {
     await one(config, 1000, n, false);
 }
 
-async function TestRejoin2B(config) {
+async function TestRejoin2B(config: Config) {
     let n = config.servers.length;
     await one(config, 101, n, true);
     let leader = await check_one_leader(config);
@@ -127,7 +126,7 @@ async function TestRejoin2B(config) {
     await one(config, 107, n, true);
 }
 
-async function TestBackup2B(config) {
+async function TestBackup2B(config: Config) {
     let n = config.servers.length;
     await one(config, -1, n, true);
     let leader = await check_one_leader(config);
@@ -159,7 +158,7 @@ async function TestBackup2B(config) {
     await delay(3000)
 }
 
-async function TestCount2B(config) {
+async function TestCount2B(config: Config) {
     let n = config.servers.length;
     let leader = await check_one_leader(config);
     let total1 = config.rpc_count;
@@ -217,7 +216,7 @@ async function TestCount2B(config) {
 
 }
 
-async function TestPersist12C(config) {
+async function TestPersist12C(config: Config) {
     let servers = config.servers.length;
     await one(config, 11, servers, true);
     for (let i = 0; i < servers; i++) {
@@ -247,7 +246,7 @@ async function TestPersist12C(config) {
     await one(config, 16, servers, true);
 }
 
-async function TestPersist22C(config) {
+async function TestPersist22C(config: Config) {
     let n = config.servers.length;
 
     let index = 0;
@@ -277,7 +276,7 @@ async function TestPersist22C(config) {
     await one(config, 1000, n, true);
 }
 
-async function TestPersist32C(config) {
+async function TestPersist32C(config: Config) {
     let n = config.servers.length;
     await one(config, 100, n, true);
     let leader = await check_one_leader(config);
@@ -293,30 +292,30 @@ async function TestPersist32C(config) {
     await one(config, 103, n, true);
 }
 
-async function TestUnreliableAgree2C(config) {
+async function TestUnreliableAgree2C(config: Config) {
     let n = config.servers.length;
 
     let promises = []
     for (let iter = 0; iter < 50; iter++) {
-        promises.push(Promise.all([0, 1, 2, 3].map(i => one(config, (100 * iter) + i, 1))))
+        promises.push(Promise.all([0, 1, 2, 3].map(i => one(config, (100 * iter) + i, 1, true))))
         await one(config, iter, 1, true)
     }
-    let xs = Promise.all(promises)
+    let xs = await Promise.all(promises)
     await one(config, 100, n, true);
 }
 
-async function TestFigure82C(config) {
+async function TestFigure82C(config: Config) {
     let n = config.servers.length;
     await one(config, 100, n, true);
     let upServers = new Set(config.servers);
 
     for (let iter = 0; iter < 1000; iter++) {
-        let leader = -1;
+        let leader = "";
         for (let i = 0; i < n; i++) {
             let { index, term, isLeader } = await start(config, config.servers[i], Math.random() * 20)
             if (isLeader) leader = config.servers[i];
         }
-        if (leader != -1) {
+        if (leader != "") {
             crash(config, leader)
             upServers.delete(leader);
         }
@@ -332,68 +331,68 @@ async function TestFigure82C(config) {
     await one(config, 101, n, true);
 }
 
-async function snapcommon(name, disconnectf, reliable, crashf) {
+async function snapcommon(name: string, disconnectf: boolean, reliable: boolean, crashf: boolean) {
     let servers = 3;
     let config = await make_generic_test(create_raft, servers, !reliable, true);
-    console.log("---------------------- Starting", name)
-    let iters = 32;
-    await one(config, 0, servers, true)
-    let leader1 = await check_one_leader(config);
-    for (let i = 0; i < iters; i++) {
-        let victim = get(config, leader1, 1)
-        let sender = leader1
-        if (i % 3 == 1) {
-            sender = get(config, leader1, 1)
-            victim = leader1
-        }
-        if (disconnectf) {
-            disconnect(config, victim)
-            await one(config, Math.random(), servers - 1, true)
-        }
-        if (crashf) {
-            crash(config, victim)
-            await one(config, Math.random(), servers - 1, true)
-        }
+    try {
+        console.log("---------------------- Starting", name)
+        let iters = 32;
+        await one(config, 0, servers, true)
+        let leader1 = await check_one_leader(config);
+        for (let i = 0; i < iters; i++) {
+            let victim = get(config, leader1, 1)
+            let sender = leader1
+            if (i % 3 == 1) {
+                sender = get(config, leader1, 1)
+                victim = leader1
+            }
+            if (disconnectf) {
+                disconnect(config, victim)
+                await one(config, Math.random(), servers - 1, true)
+            }
+            if (crashf) {
+                crash(config, victim)
+                await one(config, Math.random(), servers - 1, true)
+            }
 
-        for (let j = 1; j < 11; j++) {
-            await start(config, sender, i * 10 + j)
-        }
-        console.log("here")
-        await one(config, (i + 1) * 10, servers - 1, true)
-        console.log("here1")
+            for (let j = 1; j < 11; j++) {
+                await start(config, sender, i * 10 + j)
+            }
+            await one(config, (i + 1) * 10, servers - 1, true)
+            //if cfg.LogSize() >= MAXLOGSIZE {
+            //    cfg.t.Fatalf("Log size too large")
+            //}
 
-        //if cfg.LogSize() >= MAXLOGSIZE {
-        //    cfg.t.Fatalf("Log size too large")
-        //}
-
-        if (disconnectf) {
-            connect(config, victim)
-            await one(config, Math.random(), servers, true)
-            leader1 = await check_one_leader(config)
+            if (disconnectf) {
+                connect(config, victim)
+                await one(config, Math.random(), servers, true)
+                leader1 = await check_one_leader(config)
+            }
+            if (crashf) {
+                restart(config, victim)
+                let v = Math.random();
+                console.log("trying ", v)
+                await one(config, v, servers, true)
+                leader1 = await check_one_leader(config)
+            }
         }
-        if (crashf) {
-            restart(config, victim)
-            let v = Math.random();
-            console.log("trying ", v)
-            await one(config, v, servers, true)
-            leader1 = await check_one_leader(config)
-        }
+    } finally {
+        await stop_test(config)
     }
-    stop_test(config)
     console.log("----------------------Finished ", name)
 }
 
 
 
-//await Test(TestInitialElection2A, 3)
-//await Test(TestReElection2A, 3)
-//await Test(TestManyElections2A, 7)
-//await Test(TestBasicAgree2B, 3)
-//await Test(TestFailAgree2B, 3)
-//await Test(TestFailNoAgree2B, 5)
-//await Test(TestRejoin2B, 3)
-//await Test(TestBackup2B, 5)
-//await Test(TestCount2B, 3)
+await Test(TestInitialElection2A, 3)
+await Test(TestReElection2A, 3)
+await Test(TestManyElections2A, 7)
+await Test(TestBasicAgree2B, 3)
+await Test(TestFailAgree2B, 3)
+await Test(TestFailNoAgree2B, 5)
+await Test(TestRejoin2B, 3)
+await Test(TestBackup2B, 5)
+await Test(TestCount2B, 3)
 await Test(TestPersist12C, 3)
 await Test(TestPersist22C, 5)
 await Test(TestPersist32C, 5)
@@ -405,5 +404,3 @@ await snapcommon("Test (2D): install snapshots (disconnect)", true, true, false)
 await snapcommon("Test (2D): install snapshots (disconnect+unreliable)", true, false, false)
 await snapcommon("Test (2D): install snapshots (crash)", false, true, true);
 await snapcommon("Test (2D): install snapshots (unreliable+crash)", false, false, true);
-
-
